@@ -1,3 +1,63 @@
 syntax = "proto3";
 
 package masterworker;
+
+// The store service definition.
+service WorkerService {
+    // Requests list of prices fro a product from store, for different vendors registered at the store
+    rpc runTask (WorkerTask) returns (TaskAccepted) {
+
+    }
+
+    rpc checkHeartBeat (CheckHeartBeat) returns (Status) {
+
+    }
+
+    rpc checkTaskStatus (CheckStatus) returns (TaskStatus) {
+
+    }
+}
+
+message TaskAccepted {
+    bool accepted = 1;
+}
+
+
+message Shard {
+    string file = 1;
+    int32 offset = 2;
+    int32 end = 3;
+}
+
+message WorkerTask {
+    string taskid = 1;
+    bool ismap = 2;
+    string userid = 3;
+    repeated Shard shards = 4;
+    string outputpath = 5;
+    int32 numberofoutputs = 6;
+}
+
+message CheckHeartBeat {
+}
+
+message Status {
+    bool isrunning = 1;
+}
+
+
+message CheckStatus {
+    string taskid = 1;
+}
+
+
+message OutPutFile {
+    string fileName = 1;
+    int32 hash = 2;
+}
+
+message TaskStatus {
+    bool running = 2;
+    bool valid = 5;
+    repeated OutPutFile files = 6;
+}

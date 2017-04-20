@@ -1,12 +1,16 @@
 #pragma once
 
 #include <mr_task_factory.h>
+#include "masterworkerImpl.h"
 #include "mr_tasks.h"
-
+using grpc::Server;
+using grpc::ServerBuilder;
+using grpc::ServerContext;
+using grpc::Status;
 
 /* CS6210_TASK: Handle all the task a Worker is supposed to do.
 	This is a big task for this project, will test your understanding of map reduce */
-class Worker {
+class Worker: public Delegator{
 
 	public:
 		/* DON'T change the function signature of this constructor */
@@ -15,7 +19,26 @@ class Worker {
 		/* DON'T change this function's signature */
 		bool run();
 
+		void initReducer(std::shared_ptr<BaseReducer> reducer,std::string filePathAppender){
+		 reducer->impl_->init(filePathAppender,100);
+		}
+
+
+        void initMap(std::shared_ptr<BaseMapper> mapper,std::string filePath,int limit)
+        {
+         mapper->impl_-> init(limit,filePath,100);
+        }
+        std::vector<MapFileOutPut> handleMapCompletion(std::shared_ptr<BaseMapper> mapper){
+        return mapper->impl_->handleCompletion();
+        }
+
+        std::string  handleReduceCompletion(std::shared_ptr<BaseReducer> reducer){
+        return reducer->impl_->handleCompletion();
+        }
+
 	private:
+
+	  std::string address;
 		/* NOW you can add below, data members and member functions as per the need of your implementation*/
 
 };
@@ -24,7 +47,7 @@ class Worker {
 /* CS6210_TASK: ip_addr_port is the only information you get when started.
 	You can populate your other class data members here if you want */
 Worker::Worker(std::string ip_addr_port) {
-
+   address=ip_addr_port;
 }
 
 extern std::shared_ptr<BaseMapper> get_mapper_from_task_factory(const std::string& user_id);
@@ -36,12 +59,12 @@ extern std::shared_ptr<BaseReducer> get_reducer_from_task_factory(const std::str
 	BaseReduer's member BaseReducerInternal impl_ directly, 
 	so you can manipulate them however you want when running map/reduce tasks*/
 bool Worker::run() {
-	/*  Below 5 lines are just examples of how you will call map and reduce
-		Remove them once you start writing your own logic */ 
-	std::cout << "worker.run(), I 'm not ready yet" <<std::endl;
-	auto mapper = get_mapper_from_task_factory("cs6210");
-	mapper->map("I m just a 'dummy', a \"dummy line\"");
-	auto reducer = get_reducer_from_task_factory("cs6210");
-	reducer->reduce("dummy", std::vector<std::string>({"1", "1"}));
+    WorkerServiceImpl service(this);
+    ServerBuilder builder;
+    builder.AddListeningPort(address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    std::cout << address << address << std::endl;
+    server->Wait();
 	return true;
 }
