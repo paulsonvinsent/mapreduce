@@ -89,6 +89,7 @@ Master::Master(const MapReduceSpec& mr_spec, const std::vector<FileShard>& file_
   int i;
   for(i=0;i<mr_spec.numberOfWorkers;i++)
   {
+      std::cout << "() Connecting to address : "<<mr_spec.workers[i] << std::endl;
     WorkerClient client(mr_spec.workers[i]);
     freeWorkers.push(&client);
   }
@@ -199,6 +200,7 @@ bool Master::isDone()
 
 std::vector<std::string> Master::getUnDoneTasks(int maxLimit)
    {
+     std::cout << "getUnDoneTasks("<<maxLimit<<")" << std::endl;
    int inserted=0;
    std::vector<std::string> taskIds;
    for(auto const &ent1 : taskProgressTracker)
@@ -209,10 +211,11 @@ std::vector<std::string> Master::getUnDoneTasks(int maxLimit)
           }
          std::string taskId=ent1.first;
          bool finished=ent1.second;
+         std::cout << "getUnDoneTasks Task Id "<<taskId<< std::endl;
          if(!finished)
            {
            std::map<std::string,WorkerClient*>::iterator it = runningWorkers.find(taskId);
-           if(it != runningWorkers.end())
+           if(it == runningWorkers.end())
            {
              taskIds.push_back(taskId);
            }
@@ -235,27 +238,38 @@ void Master::initReducePhase(){
 
 /* CS6210_TASK: Here you go. once this function is called you will complete whole map reduce task and return true if succeeded */
 bool Master::run() {
+    std::cout << "Step 1" << std::endl;
    //map phase
     while(!isDone())
     {
+      std::cout << "Step 1.1" << std::endl;
         if(numberOfFailures>max_failures_allowed)
         {
          std::cout << "Crossed maximum number of failures, quitting" << std::endl;
          return false;
         }
+        std::cout << "Step 1.2" << std::endl;
         checkAndUpdateWorkers(true);
+         std::cout << "Step 1.3 free workers: "<<freeWorkers.size() << std::endl;
          if (!freeWorkers.empty())
          {
+           std::cout << "Step 1.4" << std::endl;
             std::vector<std::string> taskIds=getUnDoneTasks(freeWorkers.size());
+             std::cout << "Step 1.5 pending tasks:"<<taskIds.size() << std::endl;
             int taskIdPos=0;
             while(taskIdPos<taskIds.size() && freeWorkers.size()>0)
             {
+               std::cout << "Step 1.6" << std::endl;
                WorkerClient* workerClient=freeWorkers.front();
+                std::cout << "Step 1.6.1" << std::endl;
                if(workerClient->checkHeartBeat())
                {
+                 std::cout << "Step 1.7" << std::endl;
                  std::string taskId=taskIds[taskIdPos];
+                  std::cout << "Step 1.7.1" << std::endl;
                  bool success=workerClient->runTask(taskId,true,spec.userId,mapTaskFileShardTracker[taskId]
                  ,(intermediateDirectory+"/"+taskId+"_"+std::to_string(taskAttemptCount[taskId])),spec.numberOfOutputs);
+                  std::cout << "Step 1.8" << std::endl;
                  if(success)
                  {
                    taskIdPos++;
@@ -276,12 +290,14 @@ bool Master::run() {
     initReducePhase();
     while(!isDone())
         {
+            std::cout << "Step 2.1" << std::endl;
             checkAndUpdateWorkers(false);
             if(numberOfFailures>max_failures_allowed)
             {
              std::cout << "Crossed maximum number of failures, quitting" << std::endl;
              return false;
             }
+            std::cout << "Step 2.2" << std::endl;
             if (!freeWorkers.empty())
             {
                std::vector<std::string> taskIds=getUnDoneTasks(freeWorkers.size());

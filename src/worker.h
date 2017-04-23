@@ -66,6 +66,7 @@ class Worker final : public WorkerService::Service{
         }
 
      void readAndMap(Shard shard,std::shared_ptr<BaseMapper> mapper){
+            std::cout << "Processing file :"<< shard.file()<< ", offset:"<<shard.offset()<<", end:"<<shard.end()<< std::endl;
            ifstream temporaryfstream(shard.file().c_str(),ifstream::binary);
            temporaryfstream.seekg(shard.offset());
            std::string line;
@@ -77,10 +78,12 @@ class Worker final : public WorkerService::Service{
         }
 
           void readAndReduce(const WorkerTask* request,std::shared_ptr<BaseReducer> reducer){
+
              std::map<std::string,std::vector<std::string>> resultMap;
              int i;
               for(i=0;i<request->shards_size();i++)
               {
+                 std::cout << "Processing file: "+request->shards(i).file() << std::endl;
                 ifstream temporaryfstream(request->shards(i).file().c_str(),ifstream::binary);
                  while(temporaryfstream.tellg()!=-1){
                             std::string line;
@@ -117,6 +120,7 @@ class Worker final : public WorkerService::Service{
       Status checkHeartBeat(ServerContext* context, const CheckHeartBeat* request,
                       masterworker::Status* reply) override
           {
+             std::cout << "message:checkHeartBeat" << std::endl;
              reply->set_isrunning(isRunning);
              return Status::OK;
           }
@@ -124,6 +128,7 @@ class Worker final : public WorkerService::Service{
       Status runTask(ServerContext* context, const WorkerTask* workerRequest,
                         TaskAccepted* reply) override
             {
+               std::cout << "message:runTask" << std::endl;
                request=workerRequest;
                reply->set_accepted(isFree);
                if(isFree)
@@ -137,7 +142,6 @@ class Worker final : public WorkerService::Service{
                     pthread_create(&tp_service, NULL, &Worker::runTaskHelperSub, this);
                     pthread_detach(tp_service);
                 }
-               isRunning=false;
                return Status::OK;
             }
 
@@ -168,6 +172,7 @@ class Worker final : public WorkerService::Service{
                             std::cout<<"TaskId:"<< taskId<< ", Total Keys processed = " << total_line_read<< std::endl;
                             total_line_read=0;
                              }
+                             isRunning=false;
          }
 
           static void *runTaskHelperSub(void *workerService)
@@ -178,6 +183,7 @@ class Worker final : public WorkerService::Service{
          Status checkTaskStatus(ServerContext* context, const CheckStatus* request,
                          TaskStatus* reply) override
              {
+                std::cout << "message:checkTaskStatus" << std::endl;
                 if(isFree || request->taskid()!=taskId)
                 {
                   reply->set_valid(false);
@@ -238,7 +244,7 @@ bool Worker::run() {
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(this);
     std::unique_ptr<Server> server(builder.BuildAndStart());
-    std::cout <<"Server listening on "<< address << address << std::endl;
+    std::cout <<"Server listening on "<< address << std::endl;
     server->Wait();
 	return true;
 }
