@@ -52,7 +52,7 @@ message CheckStatus {
 
 
 message OutPutFile {
-    string fileName = 1;
+    string file_name = 1;
     int32 hash = 2;
 }
 

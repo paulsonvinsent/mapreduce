@@ -192,7 +192,7 @@ class Worker final : public WorkerService::Service{
                         for(i=0;i<outPutFiles.size();i++)
                          {
                              OutPutFile* outputfile= reply->add_files();
-                             outputfile->set_filename(outPutFiles[i].fileName);
+                             outputfile->set_file_name(outPutFiles[i].fileName);
                              outputfile->set_hash(outPutFiles[i].hashId);
                          }
                          reply->set_running(isRunning);
