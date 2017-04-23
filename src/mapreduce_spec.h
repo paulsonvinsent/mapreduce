@@ -21,7 +21,7 @@ struct MapReduceSpec {
 };
 
 
-void splitAndAdd(const std::string& to_split,char splitChar,std::vector<std::string>& array){
+inline void splitAndAdd(const std::string& to_split,char splitChar,std::vector<std::string>& array){
     std::size_t pos = 0, found;
     while((found = to_split.find_first_of(splitChar, pos)) != std::string::npos) {
         array.push_back(to_split.substr(pos, found - pos));
@@ -66,7 +66,7 @@ inline bool read_mr_spec_from_config_file(const std::string& config_filename, Ma
 	return true;
 }
 
-bool checkWhetherFileExists(std::string fileName){
+inline bool checkWhetherFileExists(std::string fileName){
     std::ifstream f(fileName.c_str());
     return f.good();
 }

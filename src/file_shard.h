@@ -30,7 +30,7 @@ std::vector<AFileShard> fileSplits;
 
 
 
-long getSize(std::string fileName)
+inline long getSize(std::string fileName)
 {
     ifstream infile (fileName.c_str(),ifstream::binary);
     infile.seekg(0,ifstream::end);
@@ -40,7 +40,7 @@ long getSize(std::string fileName)
 }
 
 
-void getFileShards(std::vector<FileShard>& shards,std::vector<std::string> files,long maxBytes)
+inline void getFileShards(std::vector<FileShard>& shards,std::vector<std::string> files,long maxBytes)
     {
             int filesIndex=0;
             int shardsIndex=0;
