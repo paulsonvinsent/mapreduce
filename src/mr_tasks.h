@@ -21,7 +21,7 @@ typedef struct MapFileOutPutStruct{
 }MapFileOutPut;
 
 
-int hashCode (const std::string key,int sizeOfTable)
+inline int hashCode (const std::string key,int sizeOfTable)
     {
        unsigned long hash = 0;
        for(int i = 0; i < key.length(); i++)
