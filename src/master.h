@@ -67,6 +67,20 @@ class Master {
 
 		void initReducePhase();
 
+    ~Master(){
+        int i;
+        while(!freeWorkers.empty())
+        {
+           WorkerClient* client=freeWorkers.front();
+           freeWorkers.pop();
+           delete(client);
+        }
+        for(i=0;notRespondingWorkers.size();i++)
+        {
+          delete(notRespondingWorkers[i]);
+        }
+    }
+
 	private:
 
 	MapReduceSpec spec;
@@ -238,6 +252,7 @@ void Master::initReducePhase(){
 
 /* CS6210_TASK: Here you go. once this function is called you will complete whole map reduce task and return true if succeeded */
 bool Master::run() {
+    std::cout << "[INFO] Starting map-reduce"<< std::endl;
    //map phase
     std::cout << "[INFO] Starting map phase"<< std::endl;
     while(!isDone())
@@ -321,6 +336,7 @@ bool Master::run() {
             }
         sleep(3);
         }
-        std::cout << "[INFO] reduce phase completed"<< std::endl;    
+        std::cout << "[INFO] reduce phase completed"<< std::endl; 
+        std::cout << "[INFO] map-reduce phase completed"<< std::endl;   
 	return true;
 }
