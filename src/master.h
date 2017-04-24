@@ -300,6 +300,7 @@ bool Master::run() {
                   if(workerClient->checkHeartBeat())
                   {
                     std::string taskId=taskIds[taskIdPos];
+                    std::cout << "[INFO] Launching task : "<<taskId << std::endl;
                     bool success=workerClient->runTask(taskId,false,spec.userId,reduceTaskFileShardTracker[taskId]
                     ,(spec.outputDirectory+"/"+taskId+"_"+std::to_string(taskAttemptCount[taskId])),spec.numberOfOutputs);
                     if(success)
@@ -310,6 +311,7 @@ bool Master::run() {
                     }
                     else
                     {
+                      std::cout << "[INFO] Launching task : "<<taskId<<" failed"<< std::endl;
                       taskAttemptCount[taskId]=taskAttemptCount[taskId]+1;
                       freeWorkers.pop();
                       notRespondingWorkers.push_back(workerClient);
