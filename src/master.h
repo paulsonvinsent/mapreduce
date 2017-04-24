@@ -85,6 +85,7 @@ class Master {
 	You can populate your other class data members here if you want */
 Master::Master(const MapReduceSpec& mr_spec, const std::vector<FileShard>& file_shards) {
   ::mkdir(intermediateDirectory.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
+  ::mkdir(mr_spec.outputDirectory.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
   spec=mr_spec;
   int i;
   for(i=0;i<mr_spec.numberOfWorkers;i++)
