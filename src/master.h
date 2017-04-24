@@ -90,8 +90,8 @@ Master::Master(const MapReduceSpec& mr_spec, const std::vector<FileShard>& file_
   for(i=0;i<mr_spec.numberOfWorkers;i++)
   {
       std::cout << "() Connecting to address : "<<mr_spec.workers[i] << std::endl;
-    WorkerClient client(mr_spec.workers[i]);
-    freeWorkers.push(&client);
+    WorkerClient* client = new WorkerClient(mr_spec.workers[i]);
+    freeWorkers.push(client);
   }
  //map task set up
  for(int i=0;i<file_shards.size();i++)
