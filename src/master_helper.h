@@ -64,7 +64,7 @@ class WorkerClient {
         if(ismap)
         {
             shard->set_offset(file_shard.fileSplits[i].offset);
-            shard->set_offset(file_shard.fileSplits[i].end);
+            shard->set_end(file_shard.fileSplits[i].end);
         }
     }
     TaskAccepted taskAccepted;

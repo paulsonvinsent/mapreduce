@@ -138,9 +138,16 @@ class Worker final : public WorkerService::Service{
                     taskId=request->taskid();
                     isMap=request->ismap();
                     userId=request->userid();
+                    std::cout << "taskId : " <<taskId<<", isMap :"<<isMap<<", userId"<<userId<< std::endl;
+                    std::cout<<"shard size: "<<request->shards_size()<< std::endl;
                     pthread_t tp_service;
                     pthread_create(&tp_service, NULL, &Worker::runTaskHelperSub, this);
                     pthread_detach(tp_service);
+                    std::cout << "message:runTask, Accepted" << std::endl;
+                }
+                else
+                {
+                  std::cout << "message:runTask, Rejected" << std::endl;
                 }
                return Status::OK;
             }
@@ -228,7 +235,7 @@ class Worker final : public WorkerService::Service{
 Worker::Worker(std::string ip_addr_port) {
          address=ip_addr_port;
          isRunning=false;
-         isFree=false;
+         isFree=true;
          taskId="NA";
          userId="NA";
 }

@@ -99,6 +99,7 @@ Master::Master(const MapReduceSpec& mr_spec, const std::vector<FileShard>& file_
       std::string taskId=appender_map+mr_spec.userId+"_"+std::to_string(i);
       taskProgressTracker[taskId]=false;
       taskAttemptCount[taskId]=0;
+      mapTaskFileShardTracker[taskId]=file_shards[i];
    }
 }
 
