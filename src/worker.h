@@ -90,8 +90,8 @@ class Worker final : public WorkerService::Service{
                             std::string line;
                             std::getline(temporaryfstream, line);
                             int pos = line.find_first_of(',');
-                            std::string key = line.substr(pos+1),
-                            value = line.substr(0, pos);
+                            std::string value = line.substr(pos+1),
+                            key = line.substr(0, pos);
                             std::map<std::string,std::vector<std::string>>::iterator it = resultMap.find(key);
                             if(it != resultMap.end())
                                 {
