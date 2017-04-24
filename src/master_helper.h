@@ -89,22 +89,16 @@ class WorkerClient {
 
 
   bool checkHeartBeat() {
-      std::cout << "checkHeartBeat 1 " << std::endl;
       CheckHeartBeat checkHeartBeatMessage;
       masterworker::Status statusMessage;
 
       ClientContext context;
-      std::cout << "checkHeartBeat 2 " << std::endl;
 
       std::chrono::system_clock::time_point deadline =
       std::chrono::system_clock::now() + std::chrono::seconds(connection_timeout);
-
-      std::cout << "checkHeartBeat 3 " << std::endl;
-      context.set_deadline(deadline);
-      std::cout << "checkHeartBeat 4 " << std::endl;    
+      context.set_deadline(deadline);    
       // The actual RPC.
       Status status = stub_->checkHeartBeat(&context, checkHeartBeatMessage, &statusMessage);
-      std::cout << "checkHeartBeat 5 " << std::endl;
 
       // Act upon its status.
       if (status.ok()) {

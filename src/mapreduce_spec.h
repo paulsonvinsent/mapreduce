@@ -81,10 +81,12 @@ inline bool validate_mr_spec(const MapReduceSpec& mr_spec) {
     for(i=0;i<mr_spec.inputFiles.size();i++)
     {
       if(!checkWhetherFileExists(mr_spec.inputFiles[i])){
+          std::cerr << "[ERROR] Input file does not exist :" << mr_spec.inputFiles[i] << std::endl;
           return false;
       }
     }
     if(checkWhetherFileExists(mr_spec.outputDirectory)){
+      std::cerr << "[ERROR] Output directory  exist, please delete : " << mr_spec.outputDirectory << std::endl;
      return false;
     }
 	return true;

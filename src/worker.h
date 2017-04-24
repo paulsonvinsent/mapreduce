@@ -67,7 +67,7 @@ class Worker final : public WorkerService::Service{
         }
 
      void readAndMap(AFileShard shard,std::shared_ptr<BaseMapper> mapper){
-            std::cout << "Processing file :"<< shard.filePath<< ", offset:"<<shard.offset<<", end:"<<shard.end<< std::endl;
+            std::cout << "[INFO] Map: Processing Shard -> file :"<< shard.filePath<< ", offset:"<<shard.offset<<", end:"<<shard.end<< std::endl;
            ifstream temporaryfstream(shard.filePath.c_str(),ifstream::binary);
            temporaryfstream.seekg(shard.offset);
            std::string line;
@@ -84,7 +84,7 @@ class Worker final : public WorkerService::Service{
              int i;
               for(i=0;i<fileSplits.size();i++)
               {
-                 std::cout << "Processing file: "+fileSplits[i].filePath << std::endl;
+                 std::cout << "[INFO] Reduce: Processing file: "+fileSplits[i].filePath << std::endl;
                 ifstream temporaryfstream(fileSplits[i].filePath.c_str(),ifstream::binary);
                  while(temporaryfstream.tellg()!=-1){
                             std::string line;
@@ -121,7 +121,7 @@ class Worker final : public WorkerService::Service{
       Status checkHeartBeat(ServerContext* context, const CheckHeartBeat* request,
                       masterworker::Status* reply) override
           {
-             std::cout << "message:checkHeartBeat" << std::endl;
+             std::cout << "[INFO] message:checkHeartBeat" << std::endl;
              reply->set_isrunning(isRunning);
              return Status::OK;
           }
@@ -129,7 +129,7 @@ class Worker final : public WorkerService::Service{
       Status runTask(ServerContext* context, const WorkerTask* workerRequest,
                         TaskAccepted* reply) override
             {
-               std::cout << "message:runTask" << std::endl;
+               std::cout << "[INFO] message:runTask" << std::endl;
                reply->set_accepted(isFree);
                int i;
                if(isFree)
@@ -149,16 +149,13 @@ class Worker final : public WorkerService::Service{
                           aFileShard.end=workerRequest->shards(i).end();
                           fileSplits.push_back(aFileShard);
                         }
-                    std::cout << "taskId : " <<taskId<<", isMap :"<<isMap<<", userId"<<userId<< std::endl;
-                    std::cout<<"shard size: "<<workerRequest->shards_size()<< std::endl;
                     pthread_t tp_service;
                     pthread_create(&tp_service, NULL, &Worker::runTaskHelperSub, this);
                     pthread_detach(tp_service);
-                    std::cout << "message:runTask, Accepted" << std::endl;
                 }
                 else
                 {
-                  std::cout << "message:runTask, Rejected" << std::endl;
+                  std::cout << "[WARN] message:runTask, Rejected :"<<workerRequest->taskid() << std::endl;
                 }
                return Status::OK;
             }
@@ -174,7 +171,7 @@ class Worker final : public WorkerService::Service{
                                   readAndMap(fileSplits[i],mapper);
                                 }
                            outPutFiles=handleMapCompletion(mapper);
-                           std::cout<<"TaskId:"<< taskId<< ", Total Lines processed = " << total_line_read<< std::endl;
+                           std::cout<<"[INFO] TaskId:"<< taskId<< ", Total Lines processed = " << total_line_read<< std::endl;
                            total_line_read=0;
                                }
                            else
@@ -185,7 +182,7 @@ class Worker final : public WorkerService::Service{
                             MapFileOutPut mapFileOutPut;
                             mapFileOutPut.fileName =handleReduceCompletion(reducer);
                             outPutFiles.push_back(mapFileOutPut);
-                            std::cout<<"TaskId:"<< taskId<< ", Total Keys processed = " << total_line_read<< std::endl;
+                            std::cout<<"[INFO] TaskId:"<< taskId<< ", Total Keys processed = " << total_line_read<< std::endl;
                             total_line_read=0;
                              }
                             isRunning=false;
@@ -199,7 +196,7 @@ class Worker final : public WorkerService::Service{
          Status checkTaskStatus(ServerContext* context, const CheckStatus* request,
                          TaskStatus* reply) override
              {
-                std::cout << "message:checkTaskStatus" << std::endl;
+                std::cout << "[INFO] message:checkTaskStatus" << std::endl;
                 if(isFree || request->taskid()!=taskId)
                 {
                   reply->set_valid(false);
