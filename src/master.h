@@ -337,6 +337,6 @@ bool Master::run() {
         sleep(3);
         }
         std::cout << "[INFO] reduce phase completed"<< std::endl; 
-        std::cout << "[INFO] map-reduce phase completed"<< std::endl;   
+        std::cout << "[INFO] map-reduce completed"<< std::endl;   
 	return true;
 }
