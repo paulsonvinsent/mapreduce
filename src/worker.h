@@ -12,6 +12,7 @@
 #include <sstream>
 #include <mr_task_factory.h>
 #include "mr_tasks.h"
+#include "file_shard.h"
 #include "masterworker.grpc.pb.h"
 #include <grpc++/grpc++.h>
 #include <grpc/support/log.h>
@@ -65,26 +66,26 @@ class Worker final : public WorkerService::Service{
         return reducer->impl_->handleCompletion();
         }
 
-     void readAndMap(Shard shard,std::shared_ptr<BaseMapper> mapper){
-            std::cout << "Processing file :"<< shard.file()<< ", offset:"<<shard.offset()<<", end:"<<shard.end()<< std::endl;
-           ifstream temporaryfstream(shard.file().c_str(),ifstream::binary);
-           temporaryfstream.seekg(shard.offset());
+     void readAndMap(AFileShard shard,std::shared_ptr<BaseMapper> mapper){
+            std::cout << "Processing file :"<< shard.filePath<< ", offset:"<<shard.offset<<", end:"<<shard.end<< std::endl;
+           ifstream temporaryfstream(shard.filePath.c_str(),ifstream::binary);
+           temporaryfstream.seekg(shard.offset);
            std::string line;
-           while(temporaryfstream.tellg()<shard.end() && temporaryfstream.tellg()!=-1){
+           while(temporaryfstream.tellg()<shard.end && temporaryfstream.tellg()!=-1){
                 std::getline(temporaryfstream, line);
                 mapper->map(line);
                 total_line_read++;
            }
         }
 
-          void readAndReduce(const WorkerTask* request,std::shared_ptr<BaseReducer> reducer){
+          void readAndReduce(std::shared_ptr<BaseReducer> reducer){
 
              std::map<std::string,std::vector<std::string>> resultMap;
              int i;
-              for(i=0;i<request->shards_size();i++)
+              for(i=0;i<fileSplits.size();i++)
               {
-                 std::cout << "Processing file: "+request->shards(i).file() << std::endl;
-                ifstream temporaryfstream(request->shards(i).file().c_str(),ifstream::binary);
+                 std::cout << "Processing file: "+fileSplits[i].filePath << std::endl;
+                ifstream temporaryfstream(fileSplits[i].filePath.c_str(),ifstream::binary);
                  while(temporaryfstream.tellg()!=-1){
                             std::string line;
                             std::getline(temporaryfstream, line);
@@ -129,17 +130,27 @@ class Worker final : public WorkerService::Service{
                         TaskAccepted* reply) override
             {
                std::cout << "message:runTask" << std::endl;
-               request=workerRequest;
                reply->set_accepted(isFree);
+               int i;
                if(isFree)
                 {
                     isRunning=true;
                     isFree=false;
-                    taskId=request->taskid();
-                    isMap=request->ismap();
-                    userId=request->userid();
+                    taskId=workerRequest->taskid();
+                    isMap=workerRequest->ismap();
+                    userId=workerRequest->userid();
+                    outputPathAppender=workerRequest->outputpath();
+                    numberofoutputs=workerRequest->numberofoutputs();
+                    for(i=0;i<workerRequest->shards_size();i++)
+                        {
+                          AFileShard aFileShard;
+                          aFileShard.filePath=workerRequest->shards(i).file();
+                          aFileShard.offset=workerRequest->shards(i).offset();
+                          aFileShard.end=workerRequest->shards(i).end();
+                          fileSplits.push_back(aFileShard);
+                        }
                     std::cout << "taskId : " <<taskId<<", isMap :"<<isMap<<", userId"<<userId<< std::endl;
-                    std::cout<<"shard size: "<<request->shards_size()<< std::endl;
+                    std::cout<<"shard size: "<<workerRequest->shards_size()<< std::endl;
                     pthread_t tp_service;
                     pthread_create(&tp_service, NULL, &Worker::runTaskHelperSub, this);
                     pthread_detach(tp_service);
@@ -156,12 +167,11 @@ class Worker final : public WorkerService::Service{
                         int i;
                         if(isMap)
                                 {
-                            std::string filePathAppender=request->outputpath();
                             auto mapper = get_mapper_from_task_factory(userId);
-                            initMap(mapper,filePathAppender,request->numberofoutputs());
-                            for(i=0;i<request->shards_size();i++)
+                            initMap(mapper,outputPathAppender,numberofoutputs);
+                            for(i=0;i<fileSplits.size();i++)
                                 {
-                                  readAndMap(request->shards(i),mapper);
+                                  readAndMap(fileSplits[i],mapper);
                                 }
                            outPutFiles=handleMapCompletion(mapper);
                            std::cout<<"TaskId:"<< taskId<< ", Total Lines processed = " << total_line_read<< std::endl;
@@ -169,17 +179,16 @@ class Worker final : public WorkerService::Service{
                                }
                            else
                                {
-                            std::string outPutPath=request->outputpath();
                             auto reducer = get_reducer_from_task_factory(userId);
-                            initReducer(reducer,outPutPath);
-                            readAndReduce(request,reducer);
+                            initReducer(reducer,outputPathAppender);
+                            readAndReduce(reducer);
                             MapFileOutPut mapFileOutPut;
                             mapFileOutPut.fileName =handleReduceCompletion(reducer);
                             outPutFiles.push_back(mapFileOutPut);
                             std::cout<<"TaskId:"<< taskId<< ", Total Keys processed = " << total_line_read<< std::endl;
                             total_line_read=0;
                              }
-                             isRunning=false;
+                            isRunning=false;
          }
 
           static void *runTaskHelperSub(void *workerService)
@@ -208,9 +217,9 @@ class Worker final : public WorkerService::Service{
                              outputfile->set_file_name(outPutFiles[i].fileName);
                              outputfile->set_hash(outPutFiles[i].hashId);
                          }
-                         reply->set_running(isRunning);
                        }
                     outPutFiles.clear();
+                    fileSplits.clear();
                     isFree=true;
                 }
                 return Status::OK;
@@ -218,13 +227,15 @@ class Worker final : public WorkerService::Service{
 
 
     private:
-        std::string userId;
+      std::string userId;
     	bool isRunning;
     	bool isMap;
     	std::string taskId;
-        bool isFree;
-        std::vector<MapFileOutPut> outPutFiles;
-        const WorkerTask* request;
+      bool isFree;
+      std::string outputPathAppender;
+      int numberofoutputs;
+      std::vector<MapFileOutPut> outPutFiles;
+      std::vector<AFileShard> fileSplits;
 	    std::string address;
 
 };
