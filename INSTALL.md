@@ -2,12 +2,11 @@
 Clone this repository
 
 # Dependencies 
-**This is same as project 3. So you can skip the rest of this page, if you have the same system on which you developed the previous project**
   1. `grpc` [How to Install](https://github.com/grpc/grpc/blob/master/INSTALL.md)
   2. `protocol buffer` [How to Install](https://github.com/google/protobuf/blob/master/src/README.md) 
     - You need version 3.0 of protoc to be able to generate code from the given proto files.
     - I would suggest the best place to install this version is from the grpc repository itself. (`grpc/third_party/protobuf/`)
-    - In the instructions for installing protoc 3.0, `make check` might fail. continue installing even after that. If compilation works fine with this new protoc, all set for the project.
+    - While installing protoc 3.0, `make check` might fail. continue installing even after that. If compilation works fine with this new protoc, all set for the project.
   3. You need to be able to compile c++11 code on your Linux system
 
 # One way to get the dependencies
